@@ -61,17 +61,16 @@ export default class ProfileStore {
             await agent.Profiles.setMainPhoto(photo.id);
             store.userStore.setImage(photo.url);
             runInAction(() => {
-                if (this.profile && this.profile.photos) {
-                    this.profile.photos.find(p => p.isMain)!.isMain = false;
-                    this.profile.photos.find(p => p.id === photo.id)!.isMain = true;
-                    this.profile.image = photo.url;
+                if (this.profile && this.profile.value.photos) { // again this .value bs
+                    this.profile.value.photos.find(p => p.isMain)!.isMain = false;
+                    this.profile.value.photos.find(p => p.id === photo.id)!.isMain = true;
+                    this.profile.value.image = photo.url;
                     this.loading = false;
                 }
             });
         } catch (error) {
             runInAction(() => this.loading = false);
             console.log(error);
-            
         }
     }
 
@@ -88,6 +87,22 @@ export default class ProfileStore {
         } catch (error) {
             runInAction(() => this.loading = false);
             console.log(error);
+        }
+    }
+
+    updateProfile = async (profile: Partial<Profile>) => {
+        this.loading = true;
+        try {
+            await agent.Profiles.updateProfile(profile);
+            runInAction(() => {
+                if (profile.displayName && profile.displayName !== store.userStore.user?.displayName)
+                    store.userStore.setDisplayName(profile.displayName);
+                this.profile = { ...this.profile, ...profile as Profile };
+                this.loading = false;
+            });
+        } catch (error) {
+            console.log(error);
+            runInAction(() => this.loading = false);
         }
     }
 }
