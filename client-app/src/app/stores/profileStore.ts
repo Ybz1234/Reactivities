@@ -15,7 +15,6 @@ export default class ProfileStore {
 
     get isCurrentUser() {
         if (store.userStore.user && this.profile) { // can remove the .value if there are any problems
-            console.log(store.userStore.user.username, this.profile.value.username);
             return store.userStore.user.username === this.profile.value.username;
         }
         return false;
@@ -97,7 +96,8 @@ export default class ProfileStore {
             runInAction(() => {
                 if (profile.displayName && profile.displayName !== store.userStore.user?.displayName)
                     store.userStore.setDisplayName(profile.displayName);
-                this.profile = { ...this.profile, ...profile as Profile };
+                this.profile.value.displayName = profile.displayName;
+                // instead of this.profile = { ...this.profile, ...profile as Profile };
                 this.loading = false;
             });
         } catch (error) {
