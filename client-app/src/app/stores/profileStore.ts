@@ -1,5 +1,5 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
-import { Photo, Profile } from "../models/profile";
+import { Photo, Profile, UserActivity } from "../models/profile";
 import agent from "../api/agent";
 import { store } from "./store";
 
@@ -11,6 +11,8 @@ export default class ProfileStore {
     followings: Profile[] = [];
     loadingFollowings = false;
     activeTab: number = 0;
+    userActivities: UserActivity[] = [];
+    loadingActivities = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -29,10 +31,7 @@ export default class ProfileStore {
     }
 
     setActiveTab(activeTab: number) {
-        console.log('ProfileStore -> activeTab', activeTab);
-        console.log('ProfileStore -> this.activeTab before: ', this.activeTab);
         this.activeTab = activeTab;
-        console.log('ProfileStore -> this.activeTab after: ', this.activeTab);
     }
 
     get isCurrentUser() {
@@ -139,7 +138,7 @@ export default class ProfileStore {
                     following ? this.profile.value.followersCount++ : this.profile.value.followersCount--;
                     this.profile.following = !this.profile.following;
                 }
-                if (this.profile && this.profile.username === store.userStore.user?.username){
+                if (this.profile && this.profile.username === store.userStore.user?.username) {
                     following ? this.profile.value.followingCount++ : this.profile.value.followingCount--;
                 }
                 this.followings.forEach(profile => {
@@ -167,6 +166,26 @@ export default class ProfileStore {
         } catch (error) {
             console.log(error);
             runInAction(() => this.loadingFollowings = false);
+        }
+    }
+
+    loadUserActivities = async (username: string, predicate?: string) => {
+        this.loadingActivities = true;
+        try {
+            const activities = await agent.Profiles.listActivities(username, predicate!);
+            runInAction(() => {
+                this.userActivities = activities;
+                this.loadingActivities = false;
+            });
+            console.log('loadUserActivities, predicate: ', predicate);
+            console.log('loadUserActivities, username: ', username);
+            console.log('loadUserActivities, activities: ', activities);
+            console.log("userActivities:", this.userActivities);
+            console.log("Type of userActivities:", typeof this.userActivities);
+
+        } catch (error) {
+            console.log(error);
+            runInAction(() => this.loadingActivities = false);
         }
     }
 }
